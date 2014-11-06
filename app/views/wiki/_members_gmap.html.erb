@@ -1,0 +1,99 @@
+<style>
+.map img {max-width:none !important;}
+#divUserLists a {cursor:pointer;}
+</style>
+
+<h2>Project Team Map - <%=project.name%></h2>
+<div id="map1" class="map" style="height:<%=height%>px;">
+  <h4>Dynamicly loaded project map here</h4>
+</div>
+<br/>
+
+<div id="divUserLists" style="display:none">
+<h2>Unmapped Users - No Google Location recorded</h2>
+<div id="mapUnknowns">
+</div>
+<br/>
+<h2>Mapped Users - Google Location entered</h2>
+<div id="mapKnowns">
+
+</div>
+</div>
+
+<script src='http://maps.googleapis.com/maps/api/js?sensor=false' type='text/javascript'></script>
+<%=javascript_include_tag('gmap3.min.js', :plugin => 'redmine_membersgmap')%>
+<%=javascript_include_tag('daynightoverlay.min.js', :plugin => 'redmine_membersgmap')%>
+<%=javascript_include_tag('md5.js', :plugin => 'redmine_membersgmap')%>
+
+
+<script type='text/javascript'>
+var userArray  = [];
+$(document).ready(function () {
+	<%
+	users.each {|user| 
+		#for each user work out the project role
+
+		userroles = ""
+		user.roles_for_project(project).each {|role|
+			userroles += "," if !(userroles == "")
+			userroles += role.name
+		}
+		maprole=""
+		roleorder.split(',').each {|role|
+			if !(userroles.split(',').index(role).nil?)
+				maprole = role
+				break
+			end
+		}
+		%>
+		userArray.push( {name: "<%=user.name %>" , role: "<%=maprole%>", mail: "<%=user.mail %>",  location: "<%=user.custom_field_value('Google_Maps_Location') %>"} );
+		<%
+	}
+	%>
+
+
+
+ <% users.each {|user| 
+	#for each user work out the project role
+ %>
+	var strRoles="";
+    <% user.roles_for_project(project).each {|role|%>
+	    if (strRoles != "")
+			strRoles += ",";
+		strRoles += "<%=role.name%>";
+	<% }%>
+	
+	var strRole = ""; roleOrder = "<%=roleorder%>".split(",");
+	for (var role in roleOrder ) {
+		if ( $.inArray(roleOrder[role],  strRoles.split(",")) ){
+			strRole = roleOrder[role];
+			break;
+		}	
+	}
+	if(strRole=="")
+		strRole = strRoles.split(",")[0];
+	
+	//userArray.push( {name: "<%=user.name %>" , role: strRole, mail: "<%=user.mail %>", location: "<%=user.custom_field_value('Google Maps Location') %>" } );
+ <% } %>
+});
+</script>
+
+ <%=roleorder%>
+ <%=height%>
+
+ <br/>INSPECT<br/>
+ <%=users.inspect%>
+
+ <br/>First Value<br/>
+ <%=users.first.custom_field_values%>
+
+	<br/>EACVALUE<br/>
+ <% users.each {|user| %>
+	<%=user.custom_field_values %><br/>
+ <% } %>
+ 
+ METHODS<br/>
+ <%=users.first.methods%>
+
+
+
