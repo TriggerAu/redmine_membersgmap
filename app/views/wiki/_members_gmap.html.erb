@@ -4,7 +4,7 @@
 </style>
 
 <h2>Project Team Map - <%=project.name%></h2>
-<div id="map1" class="map" style="height:<%=height%>px;">
+<div id="map1" class="map" style="height:<%=options.height%>px;">
   <h4>Dynamicly loaded project map here</h4>
 </div>
 <br/>
@@ -27,9 +27,10 @@
 
 
 <script type='text/javascript'>
-var userArray  = [];
+var userList  = [];
 $(document).ready(function () {
 	<%
+	#Build the array of users
 	users.each {|user| 
 		#for each user work out the project role
 
@@ -39,61 +40,107 @@ $(document).ready(function () {
 			userroles += role.name
 		}
 		maprole=""
-		roleorder.split(',').each {|role|
+		options.roleorder.split(',').each {|role|
 			if !(userroles.split(',').index(role).nil?)
 				maprole = role
 				break
 			end
 		}
 		%>
-		userArray.push( {name: "<%=user.name %>" , role: "<%=maprole%>", mail: "<%=user.mail %>",  location: "<%=user.custom_field_value('Google_Maps_Location') %>"} );
+		userList.push( {name: "<%=user.name %>" , role: "<%=maprole%>", mail: "<%=user.mail %>",  location: "<%=user.custom_field_value(mapfield) %>"} );
 		<%
 	}
 	%>
 
+	//Now we do all the Map stuff
 
+	RenderMapResults();
 
- <% users.each {|user| 
-	#for each user work out the project role
- %>
-	var strRoles="";
-    <% user.roles_for_project(project).each {|role|%>
-	    if (strRoles != "")
-			strRoles += ",";
-		strRoles += "<%=role.name%>";
-	<% }%>
-	
-	var strRole = ""; roleOrder = "<%=roleorder%>".split(",");
-	for (var role in roleOrder ) {
-		if ( $.inArray(roleOrder[role],  strRoles.split(",")) ){
-			strRole = roleOrder[role];
-			break;
-		}	
-	}
-	if(strRole=="")
-		strRole = strRoles.split(",")[0];
-	
-	//userArray.push( {name: "<%=user.name %>" , role: strRole, mail: "<%=user.mail %>", location: "<%=user.custom_field_value('Google Maps Location') %>" } );
- <% } %>
+	$("#divUserLists").slideDown();
+
 });
+
+var mapMarkerValues = [];
+var mapObj;
+function RenderMapResults() {
+
+
+for(u=0;u<userList.length;u++) {
+  if(userList[u].location && userList[u].location!="") {
+    if (userList[u].role == "Developer")
+      mapMarkerValues.push({address: userList[u].location, data: { name : userList[u].name, role: userList[u].role, icon: "http://www.gravatar.com/avatar/" + CryptoJS.MD5(userList[u].mail) + "?rating=PG&size=48&default=identicon"},options:{icon:"http://maps.google.com/mapfiles/ms/icons/green-dot.png"},tag:userList[u].mail });
+    else if (userList[u].role == "Manager")
+      mapMarkerValues.push({address: userList[u].location, data: { name : userList[u].name, role: userList[u].role, icon: "http://www.gravatar.com/avatar/" + CryptoJS.MD5(userList[u].mail) + "?rating=PG&size=48&default=identicon"},options:{icon:"http://maps.google.com/mapfiles/ms/icons/blue-dot.png"} ,tag:userList[u].mail});
+    else
+      mapMarkerValues.push({address: userList[u].location, data: { name : userList[u].name, role: userList[u].role, icon: "http://www.gravatar.com/avatar/" + CryptoJS.MD5(userList[u].mail) + "?rating=PG&size=48&default=identicon"},options:{icon:"http://maps.google.com/mapfiles/ms/icons/red-dot.png"} ,tag:userList[u].mail});
+
+    $("#mapKnowns").html($("#mapKnowns").html() + "<div><a onclick=\"google.maps.event.trigger($('#map1').gmap3({get:{name:'marker',tag:'" + userList[u].mail + "'}}),'click');return false\"><b>" + userList[u].name + "</b> (" + userList[u].mail + ") - " + userList[u].role + "</a></div>");
+  } else {
+    $("#mapUnknowns").html($("#mapUnknowns").html() + "<div><b>" + userList[u].name + "</b> (" + userList[u].mail + ") - " + userList[u].role + "</div>");
+  }
+}
+
+    $("#map1").gmap3({
+                map: {
+                    options: {
+                        streetViewControl: false,
+                        center: new google.maps.LatLng(<%=options.centerlat%>, <%=options.centerlat%>),
+                        zoom: <%=options.zoominitial%>,
+                        minZoom: <%=options.zoommin%>
+                    }
+                },
+                marker: {
+                    values: mapMarkerValues
+                    ,
+                    events: {
+                        click: function (marker, event, context) {
+                            var map = $(this).gmap3("get")
+                            var infowindow = $(this).gmap3({ get: { name: "infowindow" } });
+                           
+                            var contentstring = "<div style=\"width:200px;\">";
+                            if (context.data.name) {
+                                contentstring += "<div style=\"float:left;padding-right: 5px;\">";
+                                if (context.data.icon) {
+                                    contentstring = contentstring + "<img src=\"" + context.data.icon + "\" />";
+                                }
+                                contentstring += "</div><div style=\"float:left;\">";
+                                contentstring = contentstring + "<b>" + context.data.name + "</b>";
+                                if (context.data.role) {
+                                    contentstring += "<br/>" + context.data.role;
+                                }
+                                contentstring += "</div>";
+                                contentstring += "</div>";
+                            } else {
+                                contentstring = context.data;
+                            }
+
+                            if (infowindow) {
+                                infowindow.open(map, marker);
+                                infowindow.setContent(contentstring);
+                            } else {
+                                $(this).gmap3({
+                                    infowindow: {
+                                        anchor: marker,
+                                        options: { content: contentstring }
+                                    }
+                                });
+                            }
+                        }
+
+                    }
+                }
+            });
+	if (<%=options.showdaylight%>) {
+		mapObj = $("#map1").gmap3("get");
+		new DayNightOverlay({
+			map: mapObj
+		});
+	}
+}
+
+
+
+
+
 </script>
-
- <%=roleorder%>
- <%=height%>
-
- <br/>INSPECT<br/>
- <%=users.inspect%>
-
- <br/>First Value<br/>
- <%=users.first.custom_field_values%>
-
-	<br/>EACVALUE<br/>
- <% users.each {|user| %>
-	<%=user.custom_field_values %><br/>
- <% } %>
- 
- METHODS<br/>
- <%=users.first.methods%>
-
-
 
