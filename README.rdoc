@@ -1,3 +1,0 @@
-= redmine_membersgmap
-
-Description goes here

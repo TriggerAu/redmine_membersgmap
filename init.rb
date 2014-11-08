@@ -3,12 +3,12 @@ Redmine::Plugin.register :redmine_membersgmap do
 	author 'TriggerAu'
 	description 'This plugin for Redmine adds a wiki macro that will generate a Google Map showing member locations based on a custom user field'
 	version '0.0.1'
-	url 'http://example.com/path/to/plugin'
-	author_url 'http://example.com/about'
+	url 'https://github.com/TriggerAu/redmine_membersgmap'
+	author_url 'https://github.com/TriggerAu'
 
     Redmine::WikiFormatting::Macros.register do
   
-		desc"Draw a Google Map that shows Project Users - if they enroll - Wiki Only" + "\n\n" +
+		desc"Draw a Google Map that shows current Project Users - if they enroll - Wiki Only" + "\n\n" +
 			"<pre>{{members_gmap(custom field name)}}\n" + 
 			"  ...Basic map - provide the custom field that extends users\n       and contains map location</pre>" + "\n\n" +
 			"<pre>{{members_gmap(custom field name, height=400, centerlong=30, showdaylight=true)}}\n" + 
