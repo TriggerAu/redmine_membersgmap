@@ -2,7 +2,7 @@ Redmine::Plugin.register :redmine_membersgmap do
 	name 'Redmine Members Google Map plugin'
 	author 'TriggerAu'
 	description 'This plugin for Redmine adds a wiki macro that will generate a Google Map showing member locations based on a custom user field'
-	version '0.0.1'
+	version '0.1.0'
 	url 'https://github.com/TriggerAu/redmine_membersgmap'
 	author_url 'https://github.com/TriggerAu'
 
