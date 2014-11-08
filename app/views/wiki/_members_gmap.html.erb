@@ -1,30 +1,26 @@
 <style>
 .map img {max-width:none !important;}
 #divUserLists a {cursor:pointer;}
+#divUserLists h2 small {padding-left:20px;color:silver;}
 </style>
 
 <h2>Project Team Map - <%=project.name%></h2>
 <div id="map1" class="map" style="height:<%=options.height%>px;">
-  <h4>Dynamicly loaded project map here</h4>
+  <h4>Dynamically loaded project map will show here...</h4>
 </div>
 <br/>
-
 <div id="divUserLists" style="display:none">
-<h2>Unmapped Users - No Google Location recorded</h2>
-<div id="mapUnknowns">
-</div>
-<br/>
-<h2>Mapped Users - Google Location entered</h2>
-<div id="mapKnowns">
-
-</div>
+	<h2>Mapped Users - Google Location entered in profile.<small>Click to show</small></h2>
+	<div id="mapKnowns"></div>
+	<br/>
+	<h2>Unmapped Users - No Google Location recorded</h2>
+	<div id="mapUnknowns"></div>
 </div>
 
 <script src='http://maps.googleapis.com/maps/api/js?sensor=false' type='text/javascript'></script>
 <%=javascript_include_tag('gmap3.min.js', :plugin => 'redmine_membersgmap')%>
 <%=javascript_include_tag('daynightoverlay.min.js', :plugin => 'redmine_membersgmap')%>
 <%=javascript_include_tag('md5.js', :plugin => 'redmine_membersgmap')%>
-
 
 <script type='text/javascript'>
 var userList  = [];
@@ -64,22 +60,29 @@ var mapMarkerValues = [];
 var mapObj;
 function RenderMapResults() {
 
+	mapMarkerValues = [];
+	//Loop through the users
+	for(u=0;u<userList.length;u++) {
+		if(userList[u].location && userList[u].location!="") {
+		//Do some coloring for the three standard roles
+		if (userList[u].role == "Developer")
+			mapMarkerValues.push({address: userList[u].location, data: { name : userList[u].name, role: userList[u].role, icon: "http://www.gravatar.com/avatar/" + CryptoJS.MD5(userList[u].mail) + "?rating=PG&size=48&default=<%=Setting[:gravatar_default]%>"},options:{icon:"http://maps.google.com/mapfiles/ms/icons/green-dot.png"},tag:userList[u].mail });
+		else if (userList[u].role == "Manager")
+			mapMarkerValues.push({address: userList[u].location, data: { name : userList[u].name, role: userList[u].role, icon: "http://www.gravatar.com/avatar/" + CryptoJS.MD5(userList[u].mail) + "?rating=PG&size=48&default=<%=Setting[:gravatar_default]%>"},options:{icon:"http://maps.google.com/mapfiles/ms/icons/blue-dot.png"} ,tag:userList[u].mail});
+		else if (userList[u].role == "Reporter")
+			mapMarkerValues.push({address: userList[u].location, data: { name : userList[u].name, role: userList[u].role, icon: "http://www.gravatar.com/avatar/" + CryptoJS.MD5(userList[u].mail) + "?rating=PG&size=48&default=<%=Setting[:gravatar_default]%>"},options:{icon:"http://maps.google.com/mapfiles/ms/icons/red-dot.png"} ,tag:userList[u].mail});
+		else
+			mapMarkerValues.push({address: userList[u].location, data: { name : userList[u].name, role: userList[u].role, icon: "http://www.gravatar.com/avatar/" + CryptoJS.MD5(userList[u].mail) + "?rating=PG&size=48&default=<%=Setting[:gravatar_default]%>"},options:{icon:"http://maps.google.com/mapfiles/ms/icons/yellow-dot.png"} ,tag:userList[u].mail});
 
-for(u=0;u<userList.length;u++) {
-  if(userList[u].location && userList[u].location!="") {
-    if (userList[u].role == "Developer")
-      mapMarkerValues.push({address: userList[u].location, data: { name : userList[u].name, role: userList[u].role, icon: "http://www.gravatar.com/avatar/" + CryptoJS.MD5(userList[u].mail) + "?rating=PG&size=48&default=identicon"},options:{icon:"http://maps.google.com/mapfiles/ms/icons/green-dot.png"},tag:userList[u].mail });
-    else if (userList[u].role == "Manager")
-      mapMarkerValues.push({address: userList[u].location, data: { name : userList[u].name, role: userList[u].role, icon: "http://www.gravatar.com/avatar/" + CryptoJS.MD5(userList[u].mail) + "?rating=PG&size=48&default=identicon"},options:{icon:"http://maps.google.com/mapfiles/ms/icons/blue-dot.png"} ,tag:userList[u].mail});
-    else
-      mapMarkerValues.push({address: userList[u].location, data: { name : userList[u].name, role: userList[u].role, icon: "http://www.gravatar.com/avatar/" + CryptoJS.MD5(userList[u].mail) + "?rating=PG&size=48&default=identicon"},options:{icon:"http://maps.google.com/mapfiles/ms/icons/red-dot.png"} ,tag:userList[u].mail});
+			//Add the user to the clickable list
+			$("#mapKnowns").html($("#mapKnowns").html() + "<div><a onclick=\"google.maps.event.trigger($('#map1').gmap3({get:{name:'marker',tag:'" + userList[u].mail + "'}}),'click');return false\"><b>" + userList[u].name + "</b> (" + userList[u].mail + ") - " + userList[u].role + "</a></div>");
+		} else {
+			//Add the user to the list of people who haven't enrolled
+			$("#mapUnknowns").html($("#mapUnknowns").html() + "<div><b>" + userList[u].name + "</b> (" + userList[u].mail + ") - " + userList[u].role + "</div>");
+		}
+	}
 
-    $("#mapKnowns").html($("#mapKnowns").html() + "<div><a onclick=\"google.maps.event.trigger($('#map1').gmap3({get:{name:'marker',tag:'" + userList[u].mail + "'}}),'click');return false\"><b>" + userList[u].name + "</b> (" + userList[u].mail + ") - " + userList[u].role + "</a></div>");
-  } else {
-    $("#mapUnknowns").html($("#mapUnknowns").html() + "<div><b>" + userList[u].name + "</b> (" + userList[u].mail + ") - " + userList[u].role + "</div>");
-  }
-}
-
+	//Render the map
     $("#map1").gmap3({
                 map: {
                     options: {
