@@ -5,6 +5,8 @@ This plugin for Redmine adds a wiki macro that will generate a Google Map showin
 
 Author: TriggerAu
 
+!(example.png)
+
 ## Requirements
 
 * Redmine version >= 2.x.x
